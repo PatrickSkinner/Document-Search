@@ -67,7 +67,6 @@ string getPosting(int i, vector<entry> dictionary)
     infile.read (buffer,len-1);
 
     string out = buffer;
-    //cout << out << "$\n";
 
     delete[] buffer;
     infile.close();
@@ -100,14 +99,16 @@ int main()
 
     in.close();
 
-    int i = search("pga", dictionary);
+    int i = search("rosenfield", dictionary);
 
     if(i >= 0)
     {
-        multimap <int, int> result;
+        multimap <int, string> result;
         string posting = getPosting(i, dictionary);
         istringstream ss (posting);
         string token;
+        ifstream infile ("doclist.txt",std::ifstream::binary);
+
         while(getline(ss, token, ',') && token.length() > 0)
         {
             string dn = token;
@@ -115,11 +116,20 @@ int main()
 
             string fr = token;
 
-            result.emplace( atoi(fr.c_str()) , atoi(dn.c_str()) );
+            infile.seekg((atoi(dn.c_str())-1)* 15);
+            char* buffer = new char[14];
+            infile.read (buffer,13);
+            buffer[13] = '\0';
+            string out = buffer;
+            delete[] buffer;
+
+            result.emplace( atoi(fr.c_str()) , out );
         }
 
+        infile.close();
+
         for (auto iter = result.rbegin(); iter != result.rend(); ++iter) {
-            cout << iter->first << ": " << iter->second << "\n";
+            cout << iter->second << "\t" << iter->first << "\n";
         }
 
     } else {
