@@ -11,7 +11,7 @@ using namespace std;
 struct entry
 {
     char * word;
-    int dft;
+    int nt;
     int dPointer;
     int dLength;
 
@@ -21,7 +21,7 @@ struct entry
         strcpy (word, w.c_str());
         dPointer = x;
         dLength = y;
-        dft = z;
+        nt = z;
     }
 
     bool operator==(const entry& rhs) const { word == rhs.word; }
@@ -78,7 +78,8 @@ int main()
 {
     ifstream in("dictionary.txt");
     string line;
-    vector< entry > dictionary;
+    vector<entry> dictionary;
+    vector<int> docLengths;
 
     //Load dictionary from file.
     while (getline(in, line))
@@ -96,19 +97,29 @@ int main()
 
         dictionary.push_back( entry(a,b,c,d) );
     }
-
     in.close();
+
+    ifstream inL("doclengths.txt");
+    while (getline(inL, line))
+    {
+        docLengths.push_back( atoi(line.c_str()) );
+    }
+    inL.close();
 
     int i = search("rosenfield", dictionary);
 
     if(i >= 0)
     {
-        multimap <int, string> result;
+        multimap <double, string> result;
         string posting = getPosting(i, dictionary);
         istringstream ss (posting);
         string token;
-        ifstream infile ("doclist.txt",std::ifstream::binary);
 
+        double nt = dictionary[i].nt;
+        double n = docLengths.size();
+        double idf = 1/(nt/n);
+
+        ifstream infile ("doclist.txt",std::ifstream::binary);
         while(getline(ss, token, ',') && token.length() > 0)
         {
             string dn = token;
@@ -123,9 +134,13 @@ int main()
             string out = buffer;
             delete[] buffer;
 
-            result.emplace( atoi(fr.c_str()) , out );
-        }
+            double freq = (double)atoi(fr.c_str()) / (double)docLengths[(atoi(dn.c_str())-1)];
+            double nt = dictionary[i].nt;
+            double n = docLengths.size();
+            double rank = freq*idf;
 
+            result.emplace( rank , out );
+        }
         infile.close();
 
         for (auto iter = result.rbegin(); iter != result.rend(); ++iter) {

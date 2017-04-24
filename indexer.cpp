@@ -21,7 +21,7 @@ struct posting
     }
 };
 
-void write(map<string, vector<posting> > index, vector<string> docList)
+void write(map<string, vector<posting> > index, vector<string> docList, vector<int> docLengths)
 {
     std::ofstream outD ("dictionary.txt",std::ofstream::out);
     std::ofstream outI ("index.txt",std::ofstream::out);
@@ -47,6 +47,19 @@ void write(map<string, vector<posting> > index, vector<string> docList)
     }
     outD.close();
     outI.close();
+
+    std::ofstream outDL ("doclist.txt",std::ofstream::out);
+    for(auto& x: docList)
+    {
+        outDL << x << "\n";
+    }
+    outDL.close();
+
+    std::ofstream outDLn ("doclengths.txt",std::ofstream::out);
+    for (auto& x: docLengths){
+        outDLn << x << "\n";
+    }
+    outDLn.close();
 }
 
 int main()
@@ -104,51 +117,7 @@ int main()
         in.close();
     }
 
-    write(index, docList);
-
-    /*
-    for (auto& x: index)
-    {
-        cout << x.first << "\n";
-
-        for (auto& y: x.second)
-        {
-            cout << y.docNo << "(" << y.freq << ")" << ", ";
-            //cout << y.docNo << "|" << y.freq << ", ";
-        }
-        cout << "\n";
-    }
-
-
-    for (auto& x: docList)
-    {
-        //cout << "DocNo: " << x <<"\n";
-    }
-    //cout << docList.size() << "\n";
-    */
-
-    /*
-    for (auto& x: index)
-    {
-        cout << x.first << "\n";
-        cout << "1000" << "\n";
-        cout << "500" << "\n";
-        int i = 0;
-
-        for (auto& y: x.second)
-        {
-            i++;
-        }
-        cout << i << "\n";
-    }
-    for (auto& x: docList){
-        //cout << x << "\n";
-    }
-    //cout << "\n";
-    for (auto& x: docLengths){
-        //cout << x << "\n";
-    }
-    */
+    write(index, docList, docLengths);
 
     return 0;
 }
