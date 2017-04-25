@@ -115,7 +115,7 @@ int main()
 {
     loadData();
 
-    int i = search("rosenfield");
+    int i = search("ROSENFIELD");
 
     if(i >= 0) //Word exists in dictionary.
     {
@@ -135,10 +135,10 @@ int main()
             getline(ss, token, ',');
             int fr = atoi(token.c_str());
 
-            infile.seekg(dn * 15);
-            char* buffer = new char[14];
-            infile.read (buffer,13);
-            buffer[13] = '\0';
+            infile.seekg(dn * 16);
+            char* buffer = new char[15];
+            infile.read (buffer,15);
+            buffer[14] = '\0';
             string out = buffer;
             delete[] buffer;
 
