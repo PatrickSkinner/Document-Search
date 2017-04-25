@@ -11,9 +11,9 @@ using namespace std;
 struct entry
 {
     char * word;
-    int nt;
     int dPointer;
     int dLength;
+    int nt;
 
     entry(string w, int x, int y, int z)
     {
@@ -23,11 +23,46 @@ struct entry
         dLength = y;
         nt = z;
     }
-
-    bool operator==(const entry& rhs) const { word == rhs.word; }
 };
 
-int search(string word, vector<entry> dictionary)
+vector<entry> dictionary;
+vector<int> docLengths;
+
+/* Load the files produced by the indexer into memory */
+void loadData()
+{
+    ifstream in("dictionary.txt");
+    string line;
+
+    //Load dictionary from file.
+    while (getline(in, line))
+    {
+        string a = line;
+
+        getline(in, line);
+        int b = atoi(line.c_str());
+
+        getline(in, line);
+        int c = atoi(line.c_str());
+
+        getline(in, line);
+        int d = atoi(line.c_str());
+
+        dictionary.push_back( entry(a,b,c,d) );
+    }
+    in.close();
+
+    //Load document lengths from file.
+    ifstream inL("doclengths.txt");
+    while (getline(inL, line))
+    {
+        docLengths.push_back( atoi(line.c_str()) );
+    }
+    inL.close();
+}
+
+/* Return the position of word in the dictionary, return -1 if the word is not found */
+int search(string word)
 {
     int begin = 0;
     int end = dictionary.size();
@@ -55,7 +90,8 @@ int search(string word, vector<entry> dictionary)
     return -1;
 }
 
-string getPosting(int i, vector<entry> dictionary)
+/* Retrieve the postings list for the word at position i in the dictionary */
+string getPosting(int i)
 {
     int loc = dictionary.at(i).dPointer;
     int len = dictionary.at(i).dLength;
@@ -63,8 +99,9 @@ string getPosting(int i, vector<entry> dictionary)
     ifstream infile ("index.txt",std::ifstream::binary);
     infile.seekg(loc);
 
-    char* buffer = new char[len-1];
+    char* buffer = new char[len];
     infile.read (buffer,len-1);
+    buffer[len] = '\0';
 
     string out = buffer;
 
@@ -76,42 +113,14 @@ string getPosting(int i, vector<entry> dictionary)
 
 int main()
 {
-    ifstream in("dictionary.txt");
-    string line;
-    vector<entry> dictionary;
-    vector<int> docLengths;
+    loadData();
 
-    //Load dictionary from file.
-    while (getline(in, line))
-    {
-        string a = line;
+    int i = search("rosenfield");
 
-        getline(in, line);
-        int b = atoi(line.c_str());
-
-        getline(in, line);
-        int c = atoi(line.c_str());
-
-        getline(in, line);
-        int d = atoi(line.c_str());
-
-        dictionary.push_back( entry(a,b,c,d) );
-    }
-    in.close();
-
-    ifstream inL("doclengths.txt");
-    while (getline(inL, line))
-    {
-        docLengths.push_back( atoi(line.c_str()) );
-    }
-    inL.close();
-
-    int i = search("rosenfield", dictionary);
-
-    if(i >= 0)
+    if(i >= 0) //Word exists in dictionary.
     {
         multimap <double, string> result;
-        string posting = getPosting(i, dictionary);
+        string posting = getPosting(i);
         istringstream ss (posting);
         string token;
 
@@ -122,21 +131,18 @@ int main()
         ifstream infile ("doclist.txt",std::ifstream::binary);
         while(getline(ss, token, ',') && token.length() > 0)
         {
-            string dn = token;
+            int dn = (atoi(token.c_str())-1);
             getline(ss, token, ',');
+            int fr = atoi(token.c_str());
 
-            string fr = token;
-
-            infile.seekg((atoi(dn.c_str())-1)* 15);
+            infile.seekg(dn * 15);
             char* buffer = new char[14];
             infile.read (buffer,13);
             buffer[13] = '\0';
             string out = buffer;
             delete[] buffer;
 
-            double freq = (double)atoi(fr.c_str()) / (double)docLengths[(atoi(dn.c_str())-1)];
-            double nt = dictionary[i].nt;
-            double n = docLengths.size();
+            double freq = (double)fr / (double)docLengths[dn];
             double rank = freq*idf;
 
             result.emplace( rank , out );
@@ -147,9 +153,12 @@ int main()
             cout << iter->second << "\t" << iter->first << "\n";
         }
 
-    } else {
-        cout << "Term Not Found.\n";
-    }
+        return 0;
 
-    return 0;
+    } else {
+
+        cout << "Term Not Found.\n";
+        return -1;
+
+    }
 }

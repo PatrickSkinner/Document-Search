@@ -10,10 +10,6 @@ struct posting
     int docNo;
     int freq;
 
-    bool operator<(const posting& rhs) const { docNo < rhs.docNo; }
-    bool operator>(const posting& rhs) const { docNo > rhs.docNo; }
-    bool operator==(const posting& rhs) const { docNo == rhs.docNo; }
-
     posting(int d, int f)
     {
         docNo = d;
@@ -21,72 +17,30 @@ struct posting
     }
 };
 
-void write(map<string, vector<posting> > index, vector<string> docList, vector<int> docLengths)
-{
-    std::ofstream outD ("dictionary.txt",std::ofstream::out);
-    std::ofstream outI ("index.txt",std::ofstream::out);
+map<string, vector<posting> > index;
+vector<string> docList;
+vector<int> docLengths;
 
-    if(outD.is_open() && outI.is_open())
-    {
-        for (auto& x: index)
-        {
-            outD << x.first << "\n";
-            int iStart = outI.tellp();
-            outD << outI.tellp() << "\n";
-
-            int i = 0;
-            for (auto& y: x.second)
-            {
-                outI << y.docNo << "," << y.freq << ",";
-                i++;
-            }
-
-            outD << outI.tellp() - iStart << "\n";
-            outD << i << "\n";
-        }
-    }
-    outD.close();
-    outI.close();
-
-    std::ofstream outDL ("doclist.txt",std::ofstream::out);
-    for(auto& x: docList)
-    {
-        outDL << x << "\n";
-    }
-    outDL.close();
-
-    std::ofstream outDLn ("doclengths.txt",std::ofstream::out);
-    for (auto& x: docLengths){
-        outDLn << x << "\n";
-    }
-    outDLn.close();
-}
-
-int main()
+void read()
 {
     bool isDocNo = true;
 
     string currentDoc = "";
     string line;
 
-    map<string, vector<posting> > index;
-    vector<string> docList;
-    vector<int> docLengths;
-
     ifstream in("parsed.txt");
 
-    if (true)
+    if (in.is_open())
     {
-        cout << "file open \n";
         while (getline(in, line))
         {
-            if(isDocNo == true && line.length() > 1)
+            if(isDocNo == true && line.length() > 1) //The line is a document ID.
             {
                 currentDoc = line;
                 docList.push_back(currentDoc);
                 docLengths.push_back(0);
                 isDocNo = false;
-            } else if (line.length() < 1){
+            } else if (line.length() < 1){ //The next line is a document ID, set flag.
                 isDocNo = true;
             } else { //Is a word
                 docLengths.back()++;
@@ -116,8 +70,53 @@ int main()
         }
         in.close();
     }
+}
 
-    write(index, docList, docLengths);
+void write()
+{
+    std::ofstream outD ("dictionary.txt",std::ofstream::out);
+    std::ofstream outI ("index.txt",std::ofstream::out);
+
+    if(outD.is_open() && outI.is_open())
+    {
+        for (auto& x: index)
+        {
+            outD << x.first << "\n";
+            int iStart = outI.tellp();
+            outD << outI.tellp() << "\n";
+
+            int i = 0;
+            for (auto& y: x.second)
+            {
+                outI << y.docNo << "," << y.freq << ",";
+                i++;
+            }
+
+            outD << (int) outI.tellp() - iStart << "\n";
+            outD << i << "\n";
+        }
+    }
+    outD.close();
+    outI.close();
+
+    std::ofstream outDL ("doclist.txt",std::ofstream::out);
+    for(auto& x: docList)
+    {
+        outDL << x << "\n";
+    }
+    outDL.close();
+
+    std::ofstream outDLn ("doclengths.txt",std::ofstream::out);
+    for (auto& x: docLengths){
+        outDLn << x << "\n";
+    }
+    outDLn.close();
+}
+
+int main()
+{
+    read();
+    write();
 
     return 0;
 }
