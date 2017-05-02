@@ -32,11 +32,31 @@ vector<int> docLengths;
 /* Load the files produced by the indexer into memory */
 void loadData(string term)
 {
-    ifstream in("dictionary.txt");
+    ifstream in("dictionary.txt",ifstream::in);
     string line;
 
     //Load dictionary from file.
-    //in.seekg(8001460);
+
+    /*
+    if(isalpha(term.at(0)))
+    {
+        ifstream inP ("dictPointers.txt",ifstream::in);
+        string jump;
+        for(int i = 0; i < (term.at(0) - 'A' + 1); i++){
+            getline(inP, jump);
+        }
+        inP.close();
+        //in.seekg(8001460);
+        cout << atoi(jump.c_str()) << "\n";
+        in.seekg( atoi(jump.c_str()));
+
+        while( line.length() > 0 && line.at(0) != term.at(0))
+        {
+            getline(in, line);
+        }
+        getline(in, line);
+        getline(in, line);
+    }*/
     while (getline(in, line) && line != term)
     {
         getline(in, line);
@@ -55,6 +75,7 @@ void loadData(string term)
     getline(in, line);
     int d = atoi(line.c_str());
 
+    //cout << a << "," << b << "," << c << "," << d << "\n";
     dictionary.push_back( entry(a,b,c,d) );
 
     in.close();
@@ -126,16 +147,18 @@ int main()
     }
     inL.close();
 
-    string terms = "THESIS";
+    string terms;
+    char tc[100];
+    cin.getline( tc, 100);
+    terms = tc;
+    delete[] tc;
     istringstream sst (terms);
     string term;
-    map <string, double> result;
-    map <int, double> result2;
+    map <int, double> result;
 
     while( getline(sst, term, ' ') ){
         loadData(term);
         int i = search(term);
-
         if(i >= 0) //Word exists in dictionary.
         {
             string posting = getPosting(i);
@@ -154,49 +177,30 @@ int main()
                 getline(ss, token, ',');
                 int fr = atoi(token.c_str());
 
-                /*
-                infile.seekg((dn * 15));
-                char* buffer = new char[15];
-                infile.read (buffer,15);
-                buffer[14] = '\0';
-                string out = buffer;
-                //cout << out << "\n";
-                delete[] buffer;
-                */
-
                 double freq = (double)fr / (double)docLengths[dn];
                 double rank = freq*idf;
 
-                //result2.emplace( dn, rank );
-
-                map<int, double>::iterator it = result2.find(dn);
-                if(it != result2.end()){
+                map<int, double>::iterator it = result.find(dn);
+                if(it != result.end()){
                     double oFreq = it->second;
-                    result2.erase (it);
-                    result2.emplace( dn, rank+oFreq );
+                    result.erase (it);
+                    result.emplace( dn, rank+oFreq );
                 } else {
-                    result2.emplace( dn, rank );
+                    result.emplace( dn, rank );
                 }
-                //delete[] buffer;
 
             }
 
         }
     }
 
-    vector<pair<int,double> > v(result2.size());
-    copy(result2.begin(), result2.end(), v.begin());
-
-    /*
-    for (auto iter = result2.rbegin(); iter != result2.rend(); ++iter) {
-            cout << iter->first << "\t" << iter->second << "\n";
-    }*/
+    vector<pair<int,double> > v(result.size());
+    copy(result.begin(), result.end(), v.begin());
 
     sort(v.begin(),v.end(),myComparison);
 
     ifstream infile ("doclist.txt",std::ifstream::binary);
     for(pair<int, double> x: v){
-        //cout << get<0>(x)
         infile.seekg((get<0>(x) * 15));
         char* buffer = new char[15];
         infile.read (buffer,15);
@@ -204,6 +208,7 @@ int main()
         cout << buffer;
         cout << "\t" << get<1>(x) << "\n";
         delete[] buffer;
+
     }
     infile.close();
 

@@ -72,19 +72,24 @@ void read()
     }
 }
 
+/* Write dictionary, index and postings to disk */
 void write()
 {
     std::ofstream outD ("dictionary.txt",std::ofstream::out);
-    std::ofstream outI ("index.txt",std::ofstream::out);
+    std::ofstream outI ("index.txt",std::ofstream::binary);
+    std::ofstream outP ("dictPointers.txt",std::ofstream::out);
 
     if(outD.is_open() && outI.is_open())
     {
+        char last = '\0';
         for (auto& x: index)
         {
             outD << x.first << "\n";
+             // Word
             int iStart = outI.tellp();
-            outD << outI.tellp() << "\n";
+            outD << outI.tellp() << "\n"; // Pointer to start of postings.
 
+            /* WRITE POSTINGS LIST FOR WORD */
             int i = 0;
             for (auto& y: x.second)
             {
@@ -92,14 +97,24 @@ void write()
                 i++;
             }
 
-            outD << (int) outI.tellp() - iStart << "\n";
-            outD << i << "\n";
+            outD << (int) outI.tellp() - iStart << "\n"; // Length of postings.
+            outD << i << "\n"; // Frequency of word in collection.
+
+            if(isalpha( x.first.at(0) ))
+            {
+                if(last == '\0' || x.first.at(0) != last)
+                {
+                    cout << x.first.at(0) << "\t" << x.first << "\t" << outD.tellp() << "\n";
+                    last = x.first.at(0);
+                    outP << outD.tellp() << "\n";
+                }
+            }
         }
     }
     outD.close();
     outI.close();
-
-    std::ofstream outDL ("doclist.txt",std::ofstream::out);
+    outP.close();
+    std::ofstream outDL ("doclist.txt",std::ofstream::binary);
     for(auto& x: docList)
     {
         outDL << x << "\n";
@@ -117,6 +132,5 @@ int main()
 {
     read();
     write();
-
     return 0;
 }

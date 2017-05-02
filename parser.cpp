@@ -20,7 +20,7 @@ string getState(string token)
 }
 
 int main () {
-    ifstream infile ("wsj.xml",std::ifstream::binary);
+    ifstream infile ("text.xml",std::ifstream::binary);
     char c;
     string state = "FIND-TAG";
     string token = "";
@@ -52,11 +52,16 @@ int main () {
             }else if(isspace(c))
             {
                 token = "";
+            } else if (c == '&'){
+                if(token != "") {cout << token << "\n"; }
+                token = "";
+                state = "ESCAPE-CHARACTER";
             } else {
-                while(c != '<' && !isspace(c)  && c != '-'){
+                while(c != '<' && !isspace(c)  && c != '-' && c!='&'){
                     if(isalnum(c)) { token = token + (char)toupper(c); }
                     infile.get(c);
                 }
+                if(c == '&') { state = "ESCAPE-CHARACTER";}
                 if(token.find_first_not_of(' ') != std::string::npos)
                 {
                     cout << token << "\n";
@@ -73,6 +78,12 @@ int main () {
             cout << token << "\n";
             token = "";
             state = "FIND-TAG";
+        } else if (state == "ESCAPE-CHARACTER") {
+            while(c != ';'){
+                infile.get(c);
+            }
+            token = "";
+            state = "READ-TEXT";
         }
 
     }
